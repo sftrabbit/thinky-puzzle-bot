@@ -9,6 +9,11 @@ const GAME_LIST_CHANNEL_ID = '937030758802014289'
 const MAX_PROCESSED_MESSAGES = 100
 const processedMessageIds = []
 
+if (process.env.DISCORD_BOT_TOKEN == null) {
+  console.error('Missing DISCORD_BOT_TOKEN environment variable')
+  return
+}
+
 const client = new Client({
   intents: [
     Intents.FLAGS.GUILDS,
@@ -100,7 +105,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
           break
         } catch (error) {
-          console.log(`Failed to scrape with ${scraper.name} scraper: ${error}`)
+          console.error(`Failed to scrape with ${scraper.name} scraper: ${error}`)
         }
       }
     }
