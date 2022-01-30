@@ -6,6 +6,9 @@ const LINK_REACTION_EMOJI = '🔗'
 const URL_PATTERN = /(?<url>\<?https?:\/\/[^\s]+)/g
 const GAME_LIST_CHANNEL_ID = '937030758802014289'
 
+const MAX_PROCESSED_MESSAGES = 100
+const processedMessageIds = []
+
 const client = new Client({
   intents: [
     Intents.FLAGS.GUILDS,
@@ -37,6 +40,13 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
   if (reaction.count > 1) {
     console.log('Skipping link reaction because it is not the first link reaction on this message')
+    return
+  }
+
+  const messageId = reaction.message.id
+
+  if (processedMessageIds.includes(messageId)) {
+    console.log(`Skipping link reaction because we already processed this message`)
     return
   }
 
@@ -122,6 +132,12 @@ client.on('messageReactionAdd', async (reaction, user) => {
     channel.send(
       `ℹ️ React to links in other channels with the ${LINK_REACTION_EMOJI} emoji to add them to this list`
     )
+
+    processedMessageIds.push(messageId)
+
+    if (processedMessageIds.length > MAX_PROCESSED_MESSAGES) {
+      processedMessageIds.shift()
+    }
   }
 })
 
