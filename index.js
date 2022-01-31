@@ -117,13 +117,20 @@ client.on('messageReactionAdd', async (reaction, user) => {
       for (const gameTitle of gameTitles) {
         const game = games[gameTitle]
 
-        channel.send(
-          `**${game.title}**\n` +
-          `${quoteMessage(reaction.message)}\n\n` +
-          (game.description != null ? `${game.description}\n\n` : '') +
-          game.links.map((link) => {
+        const originalMessageQuote = removeLinkPreviews(quoteMessage(reaction.message))
+        const formattedLinks = game.links
+          .map((link) => {
             return `${link.name}: ${link.url}`
           }).join('\n')
+
+        channel.send(
+          `**${game.title}**\n` +
+          `${originalMessageQuote}\n\n` +
+          (game.description != null
+            ? `${removeLinkPreviews(game.description)}\n\n`
+            : ''
+          ) +
+          formattedLinks
         )
       }
 
@@ -143,7 +150,14 @@ client.on('messageReactionAdd', async (reaction, user) => {
 })
 
 function quoteMessage (message) {
-  const messageContent = message.content
+  return `\\@${message.author.username} said (<${message.url}>):\n` +
+    message.content.split('\n')
+      .map((line) => `> ${line}`)
+      .join('\n')
+}
+
+function removeLinkPreviews(messageContent) {
+  return messageContent
     .replace(URL_PATTERN, (url) => {
       if (url.startsWith('<') && url.endsWith('>')) {
         return url
@@ -151,11 +165,6 @@ function quoteMessage (message) {
 
       return `<${url}>`
     })
-
-  return `\\@${message.author.username} said (<${message.url}>):\n` +
-    messageContent.split('\n')
-      .map((line) => `> ${line}`)
-      .join('\n')
 }
 
 client.login(process.env.DISCORD_BOT_TOKEN)
