@@ -121,8 +121,9 @@ client.on('messageReactionAdd', async (reaction, user) => {
         const game = games[gameTitle]
 
         const formattedLinks = game.links
-          .map((link) => {
-            return `${link.name}: ${link.url}`
+          .map((link, index) => {
+            const linkUrl = index === 0 ? link.url : `<${link.url}>`
+            return `${link.name}: ${linkUrl}`
           }).join('\n')
 
         console.log(`Sending message for ${game.title}`)
