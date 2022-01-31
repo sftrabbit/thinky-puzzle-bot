@@ -1,9 +1,9 @@
+const { default: { list: extractUrls } } = require('anchorme')
 const { Client, Intents } = require('discord.js')
 
 const { SCRAPERS } = require('./scrapers')
 
 const LINK_REACTION_EMOJI = '🔗'
-const URL_PATTERN = /(?<url>\<?https?:\/\/[\w\d./?=#>]+)/g
 
 const MAX_PROCESSED_MESSAGES = 100
 const processedMessageIds = []
@@ -68,21 +68,15 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
     const messageContent = reaction.message.content
 
-    const urls = [...messageContent.matchAll(URL_PATTERN)]
-      .map((match) => {
-        const url = match.groups.url
-
-        if (url.startsWith('<') && url.endsWith('>')) {
-          return url.substring(1, url.length - 1)
-        }
-
-        return url
-      })
+    const urls = extractUrls(messageContent)
+      .filter((url) => url.protocol.match(/^https?:\/\/$/))
 
     for (const url of urls) {
+      console.log(`Scraping URL: ${url.string}`)
       for (const scraper of SCRAPERS) {
-        const match = url.match(scraper.urlPattern)
+        const match = url.string.match(scraper.urlPattern)
         if (match) {
+          console.log(`Using ${scraper.name} scraper`)
           try {
             const game = await scraper.scrape(match)
 
@@ -99,7 +93,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
             games[game.title].links.push({
               name: scraper.name,
-              url: url
+              url: url.string
             })
 
             break
@@ -157,14 +151,34 @@ function quoteMessage (message) {
 }
 
 function removeLinkPreviews(messageContent) {
-  return messageContent
-    .replace(URL_PATTERN, (url) => {
-      if (url.startsWith('<') && url.endsWith('>')) {
-        return url
+  let numCharsInserted = 0
+
+  return extractUrls(messageContent)
+    .reduce((messageContent, url) => {
+      if (url.start > 0) {
+        if (messageContent.charAt(url.start - 1) === '<' && messageContent.charAt(url.end) === '>') {
+          return messageContent
+        }
       }
 
-      return `<${url}>`
-    })
+      const modifiedMessageContent = insertText(
+        insertText(
+          messageContent,
+          '<',
+          url.start + numCharsInserted
+        ),
+        '>',
+        url.end + numCharsInserted + 1
+      )
+
+      numCharsInserted += 2
+
+      return modifiedMessageContent
+    }, messageContent)
+}
+
+function insertText(text, insertionText, position) {
+  return text.slice(0, position) + insertionText + text.slice(position)
 }
 
 client.login(process.env.DISCORD_BOT_TOKEN)
