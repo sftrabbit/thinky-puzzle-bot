@@ -115,7 +115,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
       for (const gameTitle of gameTitles) {
         const game = games[gameTitle]
 
-        const originalMessageQuote = removeLinkPreviews(quoteMessage(reaction.message))
         const formattedLinks = game.links
           .map((link) => {
             return `${link.name}: ${link.url}`
@@ -124,11 +123,12 @@ client.on('messageReactionAdd', async (reaction, user) => {
         console.log(`Sending message for ${game.title}`)
 
         channel.send({
-          content: `**${game.title}**\n` +
-            `${originalMessageQuote}\n\n` +
-            (game.description != null
-              ? `${removeLinkPreviews(game.description)}\n\n`
-              : ''
+          content:
+            `**${game.title}**\n` +
+            removeLinkPreviews(
+              game.description != null
+              ? `${game.description}\n\n`
+              : `${quoteMessage(reaction.message)}\n\n`
             ) +
             formattedLinks,
           allowedMentions: {
@@ -153,7 +153,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 })
 
 function quoteMessage (message) {
-  return `<@${message.author.id}> said (<${message.url}>):\n` +
+  return `<@${message.author.id}> said:\n` +
     message.content.split('\n')
       .map((line) => `> ${line}`)
       .join('\n')
