@@ -123,10 +123,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
       const description = game.description != null
         ? game.description
-        : `\\@${reaction.message.author.username} said:\n` +
-          reaction.message.content.split('\n')
-            .map((line) => `> ${line}`)
-            .join('\n')
+        : quoteMessage(reaction.message)
 
       channel.send(
         `**${game.title}**\n` +
@@ -148,5 +145,12 @@ client.on('messageReactionAdd', async (reaction, user) => {
     }
   }
 })
+
+function quoteMessage (message) {
+  return `\\@${message.author.username} said (<${message.url}>):\n` +
+    message.content.split('\n')
+      .map((line) => `> ${line}`)
+      .join('\n')
+}
 
 client.login(process.env.DISCORD_BOT_TOKEN)
