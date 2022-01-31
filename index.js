@@ -117,15 +117,20 @@ client.on('messageReactionAdd', async (reaction, user) => {
             return `${link.name}: ${link.url}`
           }).join('\n')
 
-        channel.send(
-          `**${game.title}**\n` +
-          `${originalMessageQuote}\n\n` +
-          (game.description != null
-            ? `${removeLinkPreviews(game.description)}\n\n`
-            : ''
-          ) +
-          formattedLinks
-        )
+        console.log(`Sending message for ${game.title}`)
+
+        channel.send({
+          content: `**${game.title}**\n` +
+            `${originalMessageQuote}\n\n` +
+            (game.description != null
+              ? `${removeLinkPreviews(game.description)}\n\n`
+              : ''
+            ) +
+            formattedLinks,
+          allowedMentions: {
+            users: []
+          }
+        })
       }
 
       channel.send(
@@ -144,7 +149,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 })
 
 function quoteMessage (message) {
-  return `\\@${message.author.username} said (<${message.url}>):\n` +
+  return `<@${message.author.id}> said (<${message.url}>):\n` +
     message.content.split('\n')
       .map((line) => `> ${line}`)
       .join('\n')
