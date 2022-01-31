@@ -29,117 +29,116 @@ client.on('ready', () => {
 })
 
 client.on('messageReactionAdd', async (reaction, user) => {
-  if (reaction.partial) {
-    try {
-      await reaction.fetch();
-    } catch (error) {
-      console.error('Something went wrong when fetching the message:', error);
-      return;
+  try {
+    if (reaction.partial) {
+      await reaction.fetch()
     }
-  }
 
-  if (reaction.emoji.name !== LINK_REACTION_EMOJI) {
-    return
-  }
+    if (reaction.emoji.name !== LINK_REACTION_EMOJI) {
+      return
+    }
 
-  const gameListChannelId = process.env.GAME_LIST_CHANNEL_ID
+    const gameListChannelId = process.env.GAME_LIST_CHANNEL_ID
 
-  console.log(`Received link reaction from ${user.username}`)
+    console.log(`Received link reaction from ${user.username}`)
 
-  if (reaction.count > 1) {
-    console.log('Skipping link reaction because it is not the first link reaction on this message')
-    return
-  }
+    if (reaction.count > 1) {
+      console.log('Skipping link reaction because it is not the first link reaction on this message')
+      return
+    }
 
-  const messageId = reaction.message.id
+    const messageId = reaction.message.id
 
-  if (processedMessageIds.includes(messageId)) {
-    console.log(`Skipping link reaction because we already processed this message`)
-    return
-  }
+    if (processedMessageIds.includes(messageId)) {
+      console.log(`Skipping link reaction because we already processed this message`)
+      return
+    }
 
-  if (reaction.message.channelId === gameListChannelId) {
-    console.log(`Skipping link reaction because it was in game list channel (${gameListChannelId})`)
-    return
-  }
+    if (reaction.message.channelId === gameListChannelId) {
+      console.log(`Skipping link reaction because it was in game list channel (${gameListChannelId})`)
+      return
+    }
 
-  if (reaction.message.author.id === client.user.id) {
-    console.log(`Skipping link reaction because message author was ${client.user.username}`)
-    return
-  }
+    if (reaction.message.author.id === client.user.id) {
+      console.log(`Skipping link reaction because message author was ${client.user.username}`)
+      return
+    }
 
-  const games = {};
+    const games = {};
 
-  const messageContent = reaction.message.content
+    const messageContent = reaction.message.content
 
-  const urls = [...messageContent.matchAll(URL_PATTERN)]
-    .map((match) => {
-      const url = match.groups.url
+    const urls = [...messageContent.matchAll(URL_PATTERN)]
+      .map((match) => {
+        const url = match.groups.url
 
-      if (url.startsWith('<') && url.endsWith('>')) {
-        return url.substring(1, url.length - 1)
-      }
+        if (url.startsWith('<') && url.endsWith('>')) {
+          return url.substring(1, url.length - 1)
+        }
 
-      return url
-    })
+        return url
+      })
 
-  for (const url of urls) {
-    for (const scraper of SCRAPERS) {
-      const match = url.match(scraper.urlPattern)
-      if (match) {
-        try {
-          const game = await scraper.scrape(match)
+    for (const url of urls) {
+      for (const scraper of SCRAPERS) {
+        const match = url.match(scraper.urlPattern)
+        if (match) {
+          try {
+            const game = await scraper.scrape(match)
 
-          if (game == null) {
-            break
-          }
-
-          if (games[game.title] == null) {
-            games[game.title] = {
-              ...game,
-              links: []
+            if (game == null) {
+              break
             }
+
+            if (games[game.title] == null) {
+              games[game.title] = {
+                ...game,
+                links: []
+              }
+            }
+
+            games[game.title].links.push({
+              name: scraper.name,
+              url: url
+            })
+
+            break
+          } catch (error) {
+            console.error(`Failed to scrape with ${scraper.name} scraper: ${error}`)
           }
-
-          games[game.title].links.push({
-            name: scraper.name,
-            url: url
-          })
-
-          break
-        } catch (error) {
-          console.error(`Failed to scrape with ${scraper.name} scraper: ${error}`)
         }
       }
     }
-  }
 
-  const gameTitles = Object.keys(games)
-  if (gameTitles.length > 0) {
-    const channel = await client.channels.fetch(gameListChannelId)
+    const gameTitles = Object.keys(games)
+    if (gameTitles.length > 0) {
+      const channel = await client.channels.fetch(gameListChannelId)
 
-    for (const gameTitle of gameTitles) {
-      const game = games[gameTitle]
+      for (const gameTitle of gameTitles) {
+        const game = games[gameTitle]
+
+        channel.send(
+          `**${game.title}**\n` +
+          `${quoteMessage(reaction.message)}\n\n` +
+          (game.description != null ? `${game.description}\n\n` : '') +
+          game.links.map((link) => {
+            return `${link.name}: ${link.url}`
+          }).join('\n')
+        )
+      }
 
       channel.send(
-        `**${game.title}**\n` +
-        `${quoteMessage(reaction.message)}\n\n` +
-        (game.description != null ? `${game.description}\n\n` : '') +
-        game.links.map((link) => {
-          return `${link.name}: ${link.url}`
-        }).join('\n')
+        `ℹ️ React to links in other channels with the ${LINK_REACTION_EMOJI} emoji to add them to this list`
       )
+
+      processedMessageIds.push(messageId)
+
+      if (processedMessageIds.length > MAX_PROCESSED_MESSAGES) {
+        processedMessageIds.shift()
+      }
     }
-
-    channel.send(
-      `ℹ️ React to links in other channels with the ${LINK_REACTION_EMOJI} emoji to add them to this list`
-    )
-
-    processedMessageIds.push(messageId)
-
-    if (processedMessageIds.length > MAX_PROCESSED_MESSAGES) {
-      processedMessageIds.shift()
-    }
+  } catch (error) {
+    console.error(`Failed to process link reaction: ${error.message}`)
   }
 })
 
