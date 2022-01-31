@@ -75,7 +75,12 @@ client.on('messageReactionAdd', async (reaction, user) => {
     const messageContent = reaction.message.content
 
     const urls = extractUrls(messageContent)
-      .filter((url) => url.protocol.match(/^https?:\/\/$/))
+      .filter((url, index, urls) => {
+        const firstIndex = urls.findIndex((otherUrl) => otherUrl.string === url.string)
+
+        return url.protocol.match(/^https?:\/\/$/)
+          && firstIndex === index
+      })
 
     for (const url of urls) {
       console.log(`Scraping URL: ${url.string}`)
