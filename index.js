@@ -144,8 +144,17 @@ client.on('messageReactionAdd', async (reaction, user) => {
 })
 
 function quoteMessage (message) {
+  const messageContent = message.content
+    .replace(URL_PATTERN, (url) => {
+      if (url.startsWith('<') && url.endsWith('>')) {
+        return url
+      }
+
+      return `<${url}>`
+    })
+
   return `\\@${message.author.username} said (<${message.url}>):\n` +
-    message.content.split('\n')
+    messageContent.split('\n')
       .map((line) => `> ${line}`)
       .join('\n')
 }
