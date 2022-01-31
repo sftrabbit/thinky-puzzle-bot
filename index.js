@@ -161,7 +161,10 @@ function removeLinkPreviews(messageContent) {
   return extractUrls(messageContent)
     .reduce((messageContent, url) => {
       if (url.start > 0) {
-        if (messageContent.charAt(url.start - 1) === '<' && messageContent.charAt(url.end) === '>') {
+        if (
+          messageContent.charAt(url.start + numCharsInserted - 1) === '<' &&
+          messageContent.charAt(url.end + numCharsInserted) === '>'
+        ) {
           return messageContent
         }
       }
