@@ -28,7 +28,7 @@ const SCRAPERS = [
       const titleElement = rootElement.querySelector('.game_title')
 
       const descriptionElement = rootElement.querySelector('.formatted_description')
-      const description = descriptionElement.text
+      const description = descriptionElement.structuredText
       const shortDescription = description.split('\n').find((line) => line.length !== 0)
 
       return {
@@ -49,7 +49,7 @@ const SCRAPERS = [
       const titleElement = rootElement.querySelector('[data-component="TitleSectionLayout"] [data-component="PDPTitleHeader"]')
 
       const descriptionElement = rootElement.querySelector('[data-component="AboutSectionLayout"]')
-      const description = descriptionElement.text
+      const description = descriptionElement.structuredText
       const shortDescription = description.split('\n').find((line) => line.length !== 0)
 
       return {
