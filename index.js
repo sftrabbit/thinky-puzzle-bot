@@ -4,14 +4,15 @@ const { SCRAPERS } = require('./scrapers')
 
 const LINK_REACTION_EMOJI = '🔗'
 const URL_PATTERN = /(?<url>\<?https?:\/\/[^\s]+)/g
-const GAME_LIST_CHANNEL_ID = '937030758802014289'
 
 const MAX_PROCESSED_MESSAGES = 100
 const processedMessageIds = []
 
-if (process.env.DISCORD_BOT_TOKEN == null) {
-  console.error('Missing DISCORD_BOT_TOKEN environment variable')
-  return
+for (const envVariable of ['DISCORD_BOT_TOKEN', 'GAME_LIST_CHANNEL_ID']) {
+  if (process.env[envVariable] == null) {
+    console.error(`Missing ${envVariable} environment variable`)
+    return
+  }
 }
 
 const client = new Client({
@@ -41,6 +42,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
     return
   }
 
+  const gameListChannelId = process.env.GAME_LIST_CHANNEL_ID
+
   console.log(`Received link reaction from ${user.username}`)
 
   if (reaction.count > 1) {
@@ -55,8 +58,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
     return
   }
 
-  if (reaction.message.channelId === GAME_LIST_CHANNEL_ID) {
-    console.log(`Skipping link reaction because it was in game list channel (${GAME_LIST_CHANNEL_ID})`)
+  if (reaction.message.channelId === gameListChannelId) {
+    console.log(`Skipping link reaction because it was in game list channel (${gameListChannelId})`)
     return
   }
 
@@ -113,7 +116,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
   const gameTitles = Object.keys(games)
   if (gameTitles.length > 0) {
-    const channel = await client.channels.fetch(GAME_LIST_CHANNEL_ID)
+    const channel = await client.channels.fetch(gameListChannelId)
 
     for (const gameTitle of gameTitles) {
       const game = games[gameTitle]
