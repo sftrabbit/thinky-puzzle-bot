@@ -38,9 +38,15 @@ client.on('messageReactionAdd', async (reaction, user) => {
       return
     }
 
-    const gameListChannelId = process.env.GAME_LIST_CHANNEL_ID
-
     console.log(`Received link reaction from ${user.username}`)
+
+    const gameListChannelId = process.env.GAME_LIST_CHANNEL_ID
+    const channel = await client.channels.fetch(gameListChannelId)
+
+    if (reaction.message.guildId !== channel.guildId) {
+      console.log('Skipping link reaction because it was in a different server')
+      return
+    }
 
     if (reaction.count > 1) {
       console.log('Skipping link reaction because it is not the first link reaction on this message')
@@ -106,8 +112,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
     const gameTitles = Object.keys(games)
     if (gameTitles.length > 0) {
-      const channel = await client.channels.fetch(gameListChannelId)
-
       for (const gameTitle of gameTitles) {
         const game = games[gameTitle]
 
