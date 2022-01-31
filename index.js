@@ -121,13 +121,10 @@ client.on('messageReactionAdd', async (reaction, user) => {
     for (const gameTitle of gameTitles) {
       const game = games[gameTitle]
 
-      const description = game.description != null
-        ? game.description
-        : quoteMessage(reaction.message)
-
       channel.send(
         `**${game.title}**\n` +
-        `${description}\n\n` +
+        `${quoteMessage(reaction.message)}\n\n` +
+        (game.description != null ? `${game.description}\n\n` : '') +
         game.links.map((link) => {
           return `${link.name}: ${link.url}`
         }).join('\n')
