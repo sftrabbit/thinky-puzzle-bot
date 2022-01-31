@@ -12,9 +12,10 @@
   "dependencies": {
     "axios": "^0.25.0",
     "discord.js": "^13.6.0",
+    "he": "^1.2.0",
     "node-html-parser": "^5.2.0"
   },
   "engines": {
-    "node" : ">=16.13.2"
+    "node": ">=16.13.2"
   }
 }

@@ -3,7 +3,7 @@ const { Client, Intents } = require('discord.js')
 const { SCRAPERS } = require('./scrapers')
 
 const LINK_REACTION_EMOJI = '🔗'
-const URL_PATTERN = /(?<url>\<?https?:\/\/[^\s]+)/g
+const URL_PATTERN = /(?<url>\<?https?:\/\/[\w\d./?=#>]+)/g
 
 const MAX_PROCESSED_MESSAGES = 100
 const processedMessageIds = []

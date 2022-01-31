@@ -1,4 +1,5 @@
 const axios = require('axios')
+const { decode: decodeEscapedHtml } = require('he')
 const { parse } = require('node-html-parser')
 
 const SCRAPERS = [
@@ -11,8 +12,8 @@ const SCRAPERS = [
       const gameInfo = response.data[steamAppId].data
 
       return {
-        title: gameInfo['name'].trim(),
-        description: gameInfo['short_description']
+        title: decodeEscapedHtml(gameInfo['name']).trim(),
+        description: decodeEscapedHtml(gameInfo['short_description'])
       }
     }
   },
@@ -26,13 +27,14 @@ const SCRAPERS = [
       const rootElement = parse(contentHtml)
 
       const titleElement = rootElement.querySelector('.game_title')
+      const title = getFirstLine(decodeEscapedHtml(titleElement.structuredText)).trim()
 
       const descriptionElement = rootElement.querySelector('.formatted_description')
-      const description = descriptionElement.structuredText
-      const shortDescription = description.split('\n').find((line) => line.length !== 0)
+      const description = decodeEscapedHtml(descriptionElement.structuredText)
+      const shortDescription = getFirstLine(description)
 
       return {
-        title: titleElement.text.trim(),
+        title: title,
         description: shortDescription
       }
     }
@@ -47,13 +49,14 @@ const SCRAPERS = [
       const rootElement = parse(contentHtml)
 
       const titleElement = rootElement.querySelector('[data-component="TitleSectionLayout"] [data-component="PDPTitleHeader"]')
+      const title = getFirstLine(decodeEscapedHtml(titleElement.structuredText)).trim()
 
       const descriptionElement = rootElement.querySelector('[data-component="AboutSectionLayout"]')
-      const description = descriptionElement.structuredText
+      const description = decodeEscapedHtml(descriptionElement.structuredText)
       const shortDescription = description.split('\n').find((line) => line.length !== 0)
 
       return {
-        title: titleElement.text.trim(),
+        title: title,
         description: shortDescription
       }
     }
@@ -83,15 +86,21 @@ const SCRAPERS = [
 function findGameTitle (rootElement) {
   const titleElement = rootElement.querySelector('title')
   if (titleElement != null) {
-    return titleElement.text
+    return getFirstLine(decodeEscapedHtml(titleElement.structuredText))
   }
 
   const h1Element = rootElement.querySelector('h1')
   if (h1Element != null) {
-    return h1Element.text
+    return getFirstLine(decodeEscapedHtml(h1Element.structuredText))
   }
 
   return null
+}
+
+function getFirstLine (text) {
+  return text
+    .split('\n')
+    .find((line) => line.length !== 0)
 }
 
 module.exports = {
