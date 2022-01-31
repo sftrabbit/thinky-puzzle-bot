@@ -5,6 +5,7 @@ const { SCRAPERS } = require('./scrapers')
 
 const LINK_REACTION_EMOJI = '🔗'
 
+const MAX_LINKS = 5
 const MAX_PROCESSED_MESSAGES = 100
 const processedMessageIds = []
 
@@ -75,6 +76,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     const messageContent = reaction.message.content
 
     const urls = extractUrls(messageContent)
+      .slice(0, MAX_LINKS)
       .filter((url, index, urls) => {
         const firstIndex = urls.findIndex((otherUrl) => otherUrl.string === url.string)
 
