@@ -147,11 +147,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
         })
       }
 
-      channel.send(
-        '\u200b\n' +
-        `ℹ️ React to links in other channels with the ${LINK_REACTION_EMOJI} emoji to add them to this list`
-      )
-
       processedMessageIds.push(messageId)
 
       if (processedMessageIds.length > MAX_PROCESSED_MESSAGES) {
