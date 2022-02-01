@@ -62,7 +62,6 @@ const SCRAPERS = [
     }
   },
   {
-    name: 'Link',
     urlPattern: /.*/,
     scrape: async (match) => {
       const response = await axios.get(match.input)

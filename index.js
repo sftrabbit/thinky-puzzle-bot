@@ -105,7 +105,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
             }
 
             games[game.title].links.push({
-              name: scraper.name,
+              name: scraper.name != null ? scraper.name : url.host,
               url: url.string
             })
 
