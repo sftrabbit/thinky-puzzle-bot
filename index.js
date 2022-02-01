@@ -134,9 +134,10 @@ client.on('messageReactionAdd', async (reaction, user) => {
           content:
             '\u200b\n' +
             `**${game.title}**\n` +
+            `Discussed here: ${reaction.message.url}\n\n` +
             removeLinkPreviews(
               game.description != null
-              ? `${game.description}\n\n`
+              ? `> ${game.description}\n\n`
               : `${quoteMessage(reaction.message)}\n\n`
             ) +
             `${formattedLinks}`,
