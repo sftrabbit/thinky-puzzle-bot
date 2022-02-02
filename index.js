@@ -4,10 +4,9 @@ const { Client, Intents } = require('discord.js')
 const { SCRAPERS } = require('./scrapers')
 
 const LINK_REACTION_EMOJI = '🔗'
+const PROCESSED_REACTION_EMOJI = '✅'
 
 const MAX_LINKS = 5
-const MAX_PROCESSED_MESSAGES = 100
-const processedMessageIds = []
 
 for (const envVariable of ['DISCORD_BOT_TOKEN', 'GAME_LIST_CHANNEL_ID']) {
   if (process.env[envVariable] == null) {
@@ -54,11 +53,15 @@ client.on('messageReactionAdd', async (reaction, user) => {
       return
     }
 
-    const messageId = reaction.message.id
+    const processedReaction = reaction.message.reactions.cache.get(PROCESSED_REACTION_EMOJI)
 
-    if (processedMessageIds.includes(messageId)) {
-      console.log(`Skipping link reaction because we already processed this message`)
-      return
+    if (processedReaction) {
+      const processedReactionUsers = await processedReaction.users.fetch()
+
+      if (processedReactionUsers.has(client.user.id)) {
+        console.log(`Skipping link reaction because we already processed this message`)
+        return
+      }
     }
 
     if (reaction.message.channelId === gameListChannelId) {
@@ -147,11 +150,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
         })
       }
 
-      processedMessageIds.push(messageId)
-
-      if (processedMessageIds.length > MAX_PROCESSED_MESSAGES) {
-        processedMessageIds.shift()
-      }
+      await reaction.message.react(PROCESSED_REACTION_EMOJI)
     }
   } catch (error) {
     console.error(`Failed to process link reaction: ${error.message}`)
