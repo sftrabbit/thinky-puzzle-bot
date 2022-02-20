@@ -1,5 +1,5 @@
 const { default: { list: extractUrls } } = require('anchorme')
-const { Client, Intents } = require('discord.js')
+const { Client, Intents, MessageCollector } = require('discord.js')
 
 const { SCRAPERS } = require('./scrapers')
 
@@ -24,8 +24,41 @@ const client = new Client({
   partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 })
 
-client.on('ready', () => {
+client.on('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`)
+  const channel = await client.channels.fetch('764163245275086878')
+
+  const entries = []
+
+  let earliestId = null
+  while (true) {
+    const messages = await channel.messages.fetch({ limit: 100, before: earliestId })
+    for (const [id, message] of messages) {
+      entries.push({
+        id: id,
+        content: message.content,
+        authorId: message.author.id,
+        authorUsername: message.author.username,
+        timestamp: message.createdTimestamp
+      })
+      earliestId = id
+    }
+    if (messages.size === 0) {
+      break
+    }
+  }
+
+  console.log(JSON.stringify(entries, null, 2))
+  // const messageCollector = channel.createMessageCollector()
+  // let count = 0
+  // messageCollector.on('collect', () => {
+  //   console.log('got message')
+  //   count++
+  // })
+  // messageCollector.on('end', () => {
+  //   console.log('done collecting', count)
+  // })
+  // console.log('starting')
 })
 
 client.on('messageReactionAdd', async (reaction, user) => {

@@ -13,7 +13,10 @@ const SCRAPERS = [
 
       return {
         title: decodeEscapedHtml(gameInfo['name']).trim(),
-        description: decodeEscapedHtml(gameInfo['short_description'])
+        description: decodeEscapedHtml(gameInfo['short_description']),
+        developers: gameInfo['developers'],
+        publishers: gameInfo['publishers'],
+        releaseDate: gameInfo['release_date']['date']
       }
     }
   },
@@ -33,9 +36,33 @@ const SCRAPERS = [
       const description = decodeEscapedHtml(descriptionElement.structuredText)
       const shortDescription = getFirstLine(description)
 
+      const developers = []
+      let releaseDate = null
+
+      const allTableCells = rootElement.querySelectorAll('table tbody tr td')
+      for (const tableCell of allTableCells) {
+        if (tableCell.rawText.startsWith('Author')) {
+          const authorsCell = tableCell.parentNode.childNodes[1]
+          const authorElements = authorsCell.querySelectorAll('a')
+          for (const authorElement of authorElements) {
+            developers.push({
+              name: authorElement.text,
+              url: authorElement.getAttribute('href')
+            })
+          }
+        }
+        if (tableCell.rawText === 'Published') {
+          const publishedCell = tableCell.parentNode.childNodes[1]
+          const publishedElement = publishedCell.querySelector('abbr')
+          releaseDate = publishedElement.getAttribute('title')
+        }
+      }
+
       return {
         title: title,
-        description: shortDescription
+        description: description,
+        developers: developers,
+        releaseDate: releaseDate
       }
     }
   },
@@ -57,7 +84,7 @@ const SCRAPERS = [
 
       return {
         title: title,
-        description: shortDescription
+        description: description
       }
     }
   },
@@ -101,6 +128,11 @@ function getFirstLine (text) {
     .split('\n')
     .find((line) => line.length !== 0)
 }
+
+// SCRAPERS[1].scrape({ input: 'https://notaninart.itch.io/pushing-u' })
+//   .then((result) => {
+//     console.log(result)
+//   })
 
 module.exports = {
   SCRAPERS
