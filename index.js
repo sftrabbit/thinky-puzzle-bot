@@ -158,7 +158,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 })
 
 function quoteMessage (message) {
-  return `<@${message.author.id}> said:\n` +
+  return `${message.author.username} said:\n` +
     message.content.split('\n')
       .map((line) => `> ${line}`)
       .join('\n')
