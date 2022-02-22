@@ -8,7 +8,7 @@ const PROCESSED_REACTION_EMOJI = '✅'
 
 const MAX_LINKS = 5
 
-for (const envVariable of ['DISCORD_BOT_TOKEN', 'GAME_LIST_CHANNEL_ID']) {
+for (const envVariable of ['DISCORD_BOT_TOKEN', 'GUILD_ID', 'GAME_LIST_CHANNEL_ID']) {
   if (process.env[envVariable] == null) {
     console.error(`Missing ${envVariable} environment variable`)
     return
@@ -34,6 +34,11 @@ client.on('messageReactionAdd', async (reaction, user) => {
       await reaction.fetch()
     }
 
+    if (reaction.message.guildId !== process.env.GUILD_ID) {
+      console.log('Skipping reaction because it was in a different server')
+      return
+    }
+
     if (reaction.emoji.name !== LINK_REACTION_EMOJI) {
       return
     }
@@ -42,11 +47,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
     const gameListChannelId = process.env.GAME_LIST_CHANNEL_ID
     const channel = await client.channels.fetch(gameListChannelId)
-
-    if (reaction.message.guildId !== channel.guildId) {
-      console.log('Skipping link reaction because it was in a different server')
-      return
-    }
 
     if (reaction.count > 1) {
       console.log('Skipping link reaction because it is not the first link reaction on this message')
