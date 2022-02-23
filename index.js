@@ -33,10 +33,12 @@ const client = new Client({
 client.on('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`)
 
+  const guild = await client.guilds.fetch(process.env.GUILD_ID)
+  console.log(`Serving guild: ${guild.name}`)
   const discordApi = new REST({ version: '9' })
     .setToken(process.env.DISCORD_BOT_TOKEN)
 
-  await discordApi.put(
+  const commands = await discordApi.put(
     Routes.applicationGuildCommands(client.user.id, process.env.GUILD_ID),
     {
       body: [
@@ -53,10 +55,31 @@ client.on('ready', async () => {
               .setDescription('New title for this game link')
               .setRequired(true)
           })
+          .setDefaultPermission(false)
           .toJSON()
       ]
     }
   )
+
+  const roles = await guild.roles.fetch()
+  const moderatorRole = roles.find((role) => role.name === 'Moderators')
+
+  if (moderatorRole != null) {
+    const setTitleCommandId = commands.find((command) => command.name === 'set-title').id
+
+    const setTitleCommand = await guild.commands.fetch(setTitleCommandId)
+    await setTitleCommand.permissions.add({
+      permissions: [
+        {
+          id: moderatorRole.id,
+          type: 'ROLE',
+          permission: true
+        }
+      ]
+    })
+  } else {
+    console.log('No Moderators role - everyone will have permission to use commands')
+  }
 
   console.log(`Registered commands with guild ${process.env.GUILD_ID}`)
 })
