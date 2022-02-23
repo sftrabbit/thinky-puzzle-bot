@@ -4,7 +4,7 @@ A bot for the [Thinky Puzzle Games Discord server](https://thinkypuzzlegames.com
 
 ## Usage
 
-The Thinky Puzzle Bot listens for 🔗 reactions on messages, attempts to extract any game links from that message, and posts information about that game to a particular channel.
+The Thinky Puzzle Bot listens for 🔗 reactions on messages, attempts to extract any game links from that message, and posts information about that game to a particular channel. The `/set-title` command can be used in that channel to update the title of a game; it takes a `message-link`, which is either a message URL or ID, and a `new-title`, which is the new title for the game.
 
 ## Deployment
 

@@ -1,5 +1,8 @@
 const { default: { list: extractUrls } } = require('anchorme')
 const { Client, Intents } = require('discord.js')
+const { Routes } = require('discord-api-types/v9')
+const { SlashCommandBuilder } = require('@discordjs/builders')
+const { REST } = require('@discordjs/rest')
 
 const { SCRAPERS } = require('./scrapers')
 
@@ -7,6 +10,9 @@ const LINK_REACTION_EMOJI = '🔗'
 const PROCESSED_REACTION_EMOJI = '✅'
 
 const MAX_LINKS = 5
+
+const MESSAGE_ID_PATTERN = /^\d+$/
+const MESSAGE_PATH_PATTERN = /\/channels\/(?<guildId>\d+)\/(?<channelId>\d+)\/(?<messageId>\d+)\/?$/
 
 for (const envVariable of ['DISCORD_BOT_TOKEN', 'GUILD_ID', 'GAME_LIST_CHANNEL_ID']) {
   if (process.env[envVariable] == null) {
@@ -24,9 +30,110 @@ const client = new Client({
   partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 })
 
-client.on('ready', () => {
+client.on('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`)
+
+  const discordApi = new REST({ version: '9' })
+    .setToken(process.env.DISCORD_BOT_TOKEN)
+
+  await discordApi.put(
+    Routes.applicationGuildCommands(client.user.id, process.env.GUILD_ID),
+    {
+      body: [
+        new SlashCommandBuilder()
+          .setName('set-title')
+          .setDescription('Set the title of a game link')
+          .addStringOption((option) => {
+            return option.setName('message-link')
+              .setDescription('URL of the game link message to be updated')
+              .setRequired(true)
+          })
+          .addStringOption((option) => {
+            return option.setName('new-title')
+              .setDescription('New title for this game link')
+              .setRequired(true)
+          })
+          .toJSON()
+      ]
+    }
+  )
+
+  console.log(`Registered commands with guild ${process.env.GUILD_ID}`)
 })
+
+client.on('interactionCreate', async (interaction) => {
+  try {
+    if (!interaction.isCommand() || interaction.guildId !== process.env.GUILD_ID) {
+      return
+    }
+
+    if (interaction.commandName !== 'set-title') {
+      console.log(`Unknown command ${interaction.commandName}`)
+      return
+    }
+
+    const gameListChannelId = process.env.GAME_LIST_CHANNEL_ID
+    const channel = await client.channels.fetch(gameListChannelId)
+
+    if (interaction.channelId !== process.env.GAME_LIST_CHANNEL_ID) {
+      await interaction.reply({
+        content: `I can only do this in the #${channel.name} channel`,
+        ephemeral: true
+      })
+      return
+    }
+
+    const messageReference = interaction.options.getString('message-link')
+    const messageId = parseMessageReference(messageReference)
+
+    const message = await channel.messages.fetch(messageId)
+
+    if (message.author.id !== client.user.id) {
+      await interaction.reply({
+        content: `That's not one of my messages!`,
+        ephemeral: true
+      })
+      return
+    }
+
+    const newTitle =interaction.options.getString('new-title')
+
+    const messageLines = message.content.split('\n')
+
+    if (messageLines.length < 2) {
+      throw new Error('Target message doesn\'t have enough lines')
+    }
+
+    messageLines[1] = `**${newTitle}**`
+
+    await message.edit(messageLines.join('\n'))
+
+    await interaction.reply({
+      content: `I've updated the title to ${newTitle} for you - enjoy!`,
+      ephemeral: true
+    })
+  } catch (error) {
+    await interaction.reply({
+      content: `Hm, something went wrong: ${error.message}`,
+      ephemeral: true
+    })
+    console.error(`Failed to process interaction: ${error.message}`)
+  }
+})
+
+function parseMessageReference(messageReference) {
+  const messageIdMatch = messageReference.match(MESSAGE_ID_PATTERN)
+  if (messageIdMatch != null) {
+    return messageReference
+  }
+
+  const messagePathMatch = messageReference.match(MESSAGE_PATH_PATTERN)
+  if (messagePathMatch != null) {
+    return messagePathMatch.groups.messageId
+  }
+
+  throw new Error('Your message-link doesn\'t seem to be a valid message URL or ID')
+}
 
 client.on('messageReactionAdd', async (reaction, user) => {
   try {
@@ -34,12 +141,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
       await reaction.fetch()
     }
 
-    if (reaction.message.guildId !== process.env.GUILD_ID) {
-      console.log('Skipping reaction because it was in a different server')
-      return
-    }
-
-    if (reaction.emoji.name !== LINK_REACTION_EMOJI) {
+    if (reaction.message.guildId !== process.env.GUILD_ID || reaction.emoji.name !== LINK_REACTION_EMOJI) {
       return
     }
 
