@@ -44,4 +44,12 @@ docker run -d --restart on-failure:10 -e GAME_LIST_CHANNEL_ID -e DISCORD_BOT_TOK
 The bot is configured with the following environment variables:
 
 - `GAME_LIST_CHANNEL_ID` (*required*) - the Discord channel ID to which game links will be posted. To obtain this, enable Developer Mode in Discord, right click the channel, and click "Copy ID".
-- `DISCORD_BOT_TOKEN` (*required*) - the Discord bot's secret token, as obtained from the [Discord developer portal](https://discord.com/developers/applications). The official Thinky Puzzle Bot in the Thinky Puzzle Games server is a private bot, so if you want to run this yourself you'll have to [create your own](https://discord.com/developers/applications).
+- `DISCORD_BOT_TOKEN` (*required*) - the Discord bot's secret token, as obtained from the [Discord developer portal](https://discord.com/developers/applications). The official Thinky Puzzle Bot in the Thinky Puzzle Games server is a private bot, so if you want to run this yourself you'll have to [create your own](https://discord.com/developers/applications). Use the OAuth 2 URL generator page to obtain an invite link with the following scopes:
+
+    - `applications.commands`
+    - `bot` with permissions:
+
+        - Read Messages/View Channels
+        - Send Messages
+        - Read Message History
+        - Add Reactions
