@@ -208,7 +208,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
       .filter((url, index, urls) => {
         const firstIndex = urls.findIndex((otherUrl) => otherUrl.string === url.string)
 
-        return url.protocol.match(/^https?:\/\/$/)
+        return url.protocol != null
+          && url.protocol.match(/^https?:\/\/$/)
           && firstIndex === index
       })
 
