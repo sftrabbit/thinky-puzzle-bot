@@ -239,7 +239,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
             break
           } catch (error) {
-            console.error(`Failed to scrape with ${scraper.name} scraper: ${error}`)
+            console.error(`Failed to scrape with ${scraper.name} scraper: ${error.stack}`)
           }
         }
       }
@@ -278,7 +278,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
       await reaction.message.react(PROCESSED_REACTION_EMOJI)
     }
   } catch (error) {
-    console.error(`Failed to process link reaction: ${error.message}`)
+    console.error(`Failed to process link reaction: ${error.stack}`)
   }
 })
 
